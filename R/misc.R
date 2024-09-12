@@ -1,51 +1,68 @@
 ################################################################################
-# Log transforms a vector. Handles non-positive values
-# Injective and strictly increasing function
+#' neglog
+#'
+#' Log transforms a vector. Handles non-positive values. Injective and strictly increasing function
+#'
+#' @param x vector or integer
+#' @param log_base base of log function - Default is exp(1)
+#'
+#' @return vector of transformed values
+#' @export
+#'
+#'
 neglog = function(x, log_base = exp(1)) {
   result = sign(x)*log(abs(x)+1, base = log_base)
   return (result)
 }
 
 ################################################################################
-# Shows regular, neglog, asinh, cubic root, x^3 qqnorms of column in df. Also histogram for neglog, regular, and cubic root
-qqplots = function(dat, col_name) {
 
-  x = dat[,col_name]
-  transforms = list(
-    regular = x,
-    neglog = neglog(x),
-    asinh = asinh(x),
-    cuberoot = nthroot(x,3),
-    cubed = x^3
-  )
-
-  par(mfrow = c(3,3))
-  foreach::foreach(transform = transforms, name = names(transforms)) %do% {
-    qqnorm(transform, main=name)
-    qqline(transform)
-    if (name %in% c('regular', 'neglog', 'cuberoot')) {
-      hist(transform, main=name)
-    }
-  }
-}
-#Example: qqplots(dat, 'spread')
-
-################################################################################
-# Shaves a certain percentage off each tail (of vector)
+#' rem_outliers
+#'
+#' Shaves a certain percentage off each tail (of vector)
+#'
+#' @param vect vector
+#' @param percentage which percentage to shave off each tail. Default = 0.01
+#'
+#' @return vector without outliers
+#' @export
+#'
 rem_outliers = function(vect, percentage = 0.01) {
   quantiles = quantile(vect, probs=c(percentage, 1-percentage), na.rm = TRUE)
   return(vect[(vect <= quantiles[2]) & (vect >= quantiles[1])])
 }
 
 ################################################################################
-# Shaves off rows where value of a given variable is an outlier
+#' df_rem_outliers
+#'
+#' Shaves off rows where value of a given variable is an outlier
+#'
+#' @param df data frame to remove outliers from
+#' @param col_name which column to consider outliers for (char)
+#' @param percentage which percentage to remove (in each tail) - Default = 0.01
+#'
+#' @return data frame without outliers
+#' @export
+#'
 df_rem_outliers = function(df, col_name, percentage = 0.01) {
   quantiles = quantile(df[,col_name], probs=c(percentage, 1-percentage), na.rm=TRUE)
   return(df[(df[,col_name] <= quantiles[2]) & (df[,col_name] >= quantiles[1]),])
 }
 
 ################################################################################
-# Sums values of specified column of outliers and non-outliers of another specified column
+#' sum_outliers
+#'
+#' Sums values of specified column of outliers and non-outliers of another specified column
+#'
+#' @param dat Data frame
+#' @param outlier_col column name (char) to define which observations are considered outliers
+#' @param sum_col which column (char) to sum ouliers for
+#' @param percentage which percentage of each tail is considered outliers
+#'
+#' @return double
+#' @export
+#'
+#'
 sum_outliers = function(dat, outlier_col, sum_col, percentage = 0.1) {
   col = dat[, outlier_col]
   quantiles = quantile(col, probs=c(percentage, 1-percentage), na.rm = FALSE)
@@ -55,6 +72,16 @@ sum_outliers = function(dat, outlier_col, sum_col, percentage = 0.1) {
 }
 
 ################################################################################
+#' normal_control
+#'
+#' Simple normal qqplots and histogram for a vector
+#'
+#' @param vect vector (numeric)
+#'
+#' @return None: Two plots
+#' @export
+#'
+#'
 normal_control = function(vect) {
   par(mfrow=c(1,2))
   qqnorm(vect)
@@ -63,8 +90,19 @@ normal_control = function(vect) {
 }
 
 ################################################################################
-# calculated partial correlation
-# x and y are strings of column names in dat. 'Controls' is vector of column names in dat
+#' par_cor
+#'
+#' calculated partial correlation of columns of data frame with specified controls
+#'
+#' @param dat data frame with variables
+#' @param x column name of first variable (char)
+#' @param y column name of second variable (char)
+#' @param controls vector of column names of control variables
+#'
+#' @return double
+#' @export
+#'
+#'
 par_cor = function(dat, x, y, controls=c()) {
   controls = controls[(controls != x) & (controls != y)]
   x_obs = dat[,x]
@@ -84,11 +122,19 @@ par_cor = function(dat, x, y, controls=c()) {
 }
 
 ################################################################################
-# Bootstrap is used e.g. for very skewed distributions when CLT is inaccurate
-#bootstrap is not advised for large data sets, almost regardless of distribution
-#since the CI are virtually the same in this case and bootstrap is calculation intense
 
-# bootstrap t CI (resamples = 10^4)
+#' bs_CI
+#'
+#' Bootstrap is used e.g. for very skewed distributions when CLT is inaccurate. Bootstrap is not advised for large data sets, almost regardless of distribution
+#' since the CIs are virtually the same (as CLT CI) in this case and bootstrap is calculation intense. Bootstrap t CI (number of resamples = 10^4)
+#'
+#' @param data vector
+#' @param conf_level confidence level
+#'
+#' @return confidence interval (vector)
+#' @export
+#'
+#'
 bs_CI = function(data,conf_level=0.95){
   n = 10^4
   res = numeric(n)
@@ -102,11 +148,21 @@ bs_CI = function(data,conf_level=0.95){
 
 
 ################################################################################
-# Funktionen additivitetsPlot beregner gennemsnit i hver gruppe
-# defineret ved A:B (A og B er faktorer) og afsætter disse mod A.
-# For hvert niveau af B forbindes gennemsnit.
-# Desuden angives 0.95 CI for middelværdien
 
+#'Funktionen additivitetsPlot beregner gennemsnit i hver gruppe
+#' defineret ved A:B (A og B er faktorer) og afsætter disse mod A.
+#' For hvert niveau af B forbindes gennemsnit.
+#' Desuden angives 0.95 CI for middelværdien
+#'
+#' @param A faktor 1
+#' @param B faktor 2
+#' @param x response variable
+#' @param ci type of ci (char)
+#'
+#' @return plots
+#' @export
+#'
+#'
 additivitetsPlot=function(A,B,x,ci=c('normal', 'bootstrap', 'none')){
   ci=match.arg(ci)
   nlevB=length(levels(B))
@@ -153,8 +209,16 @@ enumerate <- function(...) {
 
 ################################################################################
 
-# Function returns a regular t.test except when vector is constant. When constant,
-# only "conf.int" element is returned
+#' constant_friendly_t_test
+#' Function returns a regular t.test except when vector is constant. When constant,
+#' only "conf.int" element is returned
+#'
+#' @param vect vector of values to perform t-test on
+#'
+#' @return double
+#' @export
+#'
+#'
 constant_friendly_t_test = function(vect) {
   if (var(vect) <= 1e-15) {
     return (list(conf.int = c(mean(vect), mean(vect))))
@@ -166,8 +230,18 @@ constant_friendly_t_test = function(vect) {
 
 ################################################################################
 
-# Marks significance with an asterisk. Useful for both character and numeric
-# Always returns character
+
+#' mark_significance
+#'
+#' Marks significance with an asterisk. Useful for both character and numeric
+#' Always returns character
+#'
+#' @param x char or double
+#' @param level confidence level to mark - Default = 0.05
+#'
+#' @return char
+#' @export
+#'
 mark_significance = function(x, level=0.05) {
   if (as.numeric(x) <= level) {
     return (glue::glue('{x}*'))
@@ -178,7 +252,16 @@ mark_significance = function(x, level=0.05) {
 
 ################################################################################
 
-# Wrap another function call with hush() to silence output
+
+#' hush
+#'
+#' Wrap another function call with hush() to silence output
+#'
+#' @param code code chunk to hush
+#'
+#' @return Output of original function
+#' @export
+#'
 hush=function(code){
   sink("NUL") # use /dev/null in UNIX
   tmp = code
@@ -189,8 +272,19 @@ hush=function(code){
 
 ################################################################################
 
-# simple linear (normal univariate) model plots for model testing. Assuming dat only has columns
-# that are included in model, and every column in model is in dat
+
+#' linear_normal_model_test
+#'
+#' simple linear (normal univariate) model plots for model testing. Assuming dat only has columns
+#' that are included in model, and every column in model is in dat
+#'
+#' @param model lm object
+#' @param dat data frame from which model is generated
+#'
+#' @return plots
+#' @export
+#'
+#'
 linear_normal_model_test = function(model, dat) {
   par(mfrow=c(1, 1))
   # (assume independence of observations)
@@ -226,12 +320,19 @@ linear_normal_model_test = function(model, dat) {
 
 ################################################################################
 
-# Calculate expected shortfall for a vector
+#' expected_shortfall
+#'
+#' Calculate expected shortfall for a vector
+#'
+#' @param v vector (numeric)
+#' @param q quantile for value-at-risk
+#'
+#' @return double
+#' @export
+#'
 expected_shortfall = function(v, q=0.05) {
   q = quantile(v, 0.05)
   big_losses = v[v <= q]
   return (mean(big_losses))
 }
-
-################################################################################
 
